@@ -3702,6 +3702,13 @@
                   opacity: 0.5
                 }
               },
+              barLabels: {
+                enabled: false,
+                margin: 5,
+                formatter: function formatter(val) {
+                  return val;
+                }
+              },
               dataLabels: {
                 show: true,
                 name: {
@@ -22392,14 +22399,6 @@
           }
         }
 
-        var barLabelFormatter = this.barLabels.formatter;
-
-        if (!barLabelFormatter) {
-          barLabelFormatter = function barLabelFormatter(val) {
-            return val;
-          };
-        }
-
         var reverseLoop = false;
 
         if (w.config.plotOptions.radialBar.inverseOrder) {
@@ -22478,7 +22477,7 @@
 
           if (this.barLabels.enabled) {
             var barStartCords = Utils$1.polarToCartesian(opts.centerX, opts.centerY, opts.size, startAngle);
-            var text = barLabelFormatter(w.globals.seriesNames[i], {
+            var text = this.barLabels.formatter(w.globals.seriesNames[i], {
               seriesIndex: i,
               w: w
             });
