@@ -59,6 +59,15 @@ class Range {
           (label) => typeof label !== 'undefined'
         ).length
       }
+
+      if (
+        gl.labels.length &&
+        cnf.xaxis.type !== 'datetime' &&
+        gl.series.reduce((a, c) => a + c.length, 0) !== 0
+      ) {
+        // the condition cnf.xaxis.type !== 'datetime' fixes #3897 and #3905
+        gl.dataPoints = Math.max(gl.dataPoints, gl.labels.length)
+      }
       for (let j = 0; j < gl.series[i].length; j++) {
         let val = series[i][j]
         if (val !== null && Utils.isNumber(val)) {
@@ -160,7 +169,7 @@ class Range {
       minY,
       maxY,
       lowestY,
-      highestY
+      highestY,
     }
   }
 
@@ -298,7 +307,7 @@ class Range {
       maxY: gl.maxY,
       minYArr: gl.minYArr,
       maxYArr: gl.maxYArr,
-      yAxisScale: gl.yAxisScale
+      yAxisScale: gl.yAxisScale,
     }
   }
 
@@ -390,13 +399,13 @@ class Range {
           gl.xAxisScale = {
             result: catScale,
             niceMin: catScale[0],
-            niceMax: catScale[catScale.length - 1]
+            niceMax: catScale[catScale.length - 1],
           }
         } else {
           gl.xAxisScale = this.scales.setXScale(gl.minX, gl.maxX)
         }
       } else {
-        gl.xAxisScale = this.scales.linearScale(1, ticks, ticks)
+        gl.xAxisScale = this.scales.linearScale(0, ticks, ticks)
         if (gl.noLabelsProvided && gl.labels.length > 0) {
           gl.xAxisScale = this.scales.linearScale(
             1,
@@ -426,7 +435,7 @@ class Range {
 
     return {
       minX: gl.minX,
-      maxX: gl.maxX
+      maxX: gl.maxX,
     }
   }
 
@@ -522,35 +531,45 @@ class Range {
   _setStackedMinMax() {
     const gl = this.w.globals
     // for stacked charts, we calculate each series's parallel values. i.e, series[0][j] + series[1][j] .... [series[i.length][j]] and get the max out of it
-    let stackedPoss = []
-    let stackedNegs = []
 
-    if (gl.series.length) {
-      for (let j = 0; j < gl.series[gl.maxValsInArrayIndex].length; j++) {
-        let poss = 0
-        let negs = 0
-        for (let i = 0; i < gl.series.length; i++) {
-          if (gl.series[i][j] !== null && Utils.isNumber(gl.series[i][j])) {
-            // 0.0001 fixes #185 when values are very small
-            gl.series[i][j] > 0
-              ? (poss = poss + parseFloat(gl.series[i][j]) + 0.0001)
-              : (negs = negs + parseFloat(gl.series[i][j]))
+    if (!gl.series.length) return
+    let seriesGroups = gl.seriesGroups
+
+    if (!seriesGroups.length) {
+      seriesGroups = [this.w.config.series.map((serie) => serie.name)]
+    }
+    let stackedPoss = {}
+    let stackedNegs = {}
+
+    seriesGroups.forEach((group) => {
+      stackedPoss[group] = []
+      stackedNegs[group] = []
+      const indicesOfSeriesInGroup = this.w.config.series
+        .map((serie, si) => (group.indexOf(serie.name) > -1 ? si : null))
+        .filter((f) => f !== null)
+
+      indicesOfSeriesInGroup.forEach((i) => {
+        for (let j = 0; j < gl.series[gl.maxValsInArrayIndex].length; j++) {
+          if (typeof stackedPoss[group][j] === 'undefined') {
+            stackedPoss[group][j] = 0
+            stackedNegs[group][j] = 0
           }
 
-          if (i === gl.series.length - 1) {
-            // push all the totals to the array for future use
-            stackedPoss.push(poss)
-            stackedNegs.push(negs)
+          if (gl.series[i][j] !== null && Utils.isNumber(gl.series[i][j])) {
+            gl.series[i][j] > 0
+              ? (stackedPoss[group][j] += parseFloat(gl.series[i][j]) + 0.0001)
+              : (stackedNegs[group][j] += parseFloat(gl.series[i][j]))
           }
         }
-      }
-    }
+      })
+    })
 
-    // get the max/min out of the added parallel values
-    for (let z = 0; z < stackedPoss.length; z++) {
-      gl.maxY = Math.max(gl.maxY, stackedPoss[z])
-      gl.minY = Math.min(gl.minY, stackedNegs[z])
-    }
+    Object.entries(stackedPoss).forEach(([key]) => {
+      stackedPoss[key].forEach((_, stgi) => {
+        gl.maxY = Math.max(gl.maxY, stackedPoss[key][stgi])
+        gl.minY = Math.min(gl.minY, stackedNegs[key][stgi])
+      })
+    })
   }
 }
 

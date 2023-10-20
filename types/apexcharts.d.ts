@@ -150,6 +150,7 @@ type ApexChart = {
     enabled?: boolean
     autoScaleYaxis?: boolean
     target?: string
+    targets?: string[]
   }
   id?: string
   group?: string
@@ -312,6 +313,8 @@ type ApexAxisChartSeries = {
   name?: string
   type?: string
   color?: string
+  group?: string
+  zIndex?: number
   data:
     | (number | null)[]
     | {
@@ -338,7 +341,7 @@ type ApexNonAxisChartSeries = number[]
  */
 type ApexStroke = {
   show?: boolean
-  curve?: 'smooth' | 'straight' | 'stepline' | ('smooth' | 'straight' | 'stepline')[]
+  curve?: 'smooth' | 'straight' | 'stepline' | 'monotoneCubic' | ('smooth' | 'straight' | 'stepline' | 'monotoneCubic')[]
   lineCap?: 'butt' | 'square' | 'round'
   colors?: string[]
   width?: number | number[]
@@ -509,8 +512,8 @@ type ApexPlotOptions = {
   }
   bar?: {
     horizontal?: boolean
-    columnWidth?: string
-    barHeight?: string
+    columnWidth?: string | number;
+    barHeight?: string | number;
     distributed?: boolean
     borderRadius?: number;
     borderRadiusApplication?: 'around' | 'end';
@@ -518,6 +521,10 @@ type ApexPlotOptions = {
     hideZeroBarsWhenGrouped?: boolean
     rangeBarOverlap?: boolean
     rangeBarGroupRows?: boolean
+    isDumbbell?: boolean;
+    dumbbellColors?: string[][];
+    isFunnel?: boolean;
+    isFunnel3d?: boolean;
     colors?: {
       ranges?: {
         from?: number
@@ -593,6 +600,7 @@ type ApexPlotOptions = {
     distributed?: boolean
     reverseNegativeShade?: boolean
     useFillColorAsStroke?: boolean
+    dataLabels?: { format?: 'scale' | 'truncate' }
     colorScale?: {
       inverse?: boolean
       ranges?: {
@@ -747,6 +755,12 @@ type ApexPlotOptions = {
   }
 }
 
+type ApexColorStop = {
+  offset: number
+  color: string
+  opacity: number
+}
+
 type ApexFill = {
   colors?: any[]
   opacity?: number | number[]
@@ -760,7 +774,7 @@ type ApexFill = {
     opacityFrom?: number | number[]
     opacityTo?: number | number[]
     stops?: number[],
-    colorStops?: any[]
+    colorStops?: ApexColorStop[][] | ApexColorStop[]
   }
   image?: {
     src?: string | string[]

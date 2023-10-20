@@ -57,7 +57,7 @@ export default class Markers {
         class:
           alwaysDrawMarker || hasDiscreteMarkers
             ? ''
-            : 'apexcharts-series-markers'
+            : 'apexcharts-series-markers',
       })
 
       elPointsWrap.attr(
@@ -68,15 +68,6 @@ export default class Markers {
 
     if (Array.isArray(p.x)) {
       for (let q = 0; q < p.x.length; q++) {
-        if (
-          p.x[q] < 0 ||
-          p.x[q] > w.globals.gridWidth ||
-          p.y[q] < 0 ||
-          p.y[q] > w.globals.gridHeight
-        ) {
-          continue
-        }
-
         let dataPointIndex = j
 
         // a small hack as we have 2 points for the first val to connect it
@@ -106,7 +97,7 @@ export default class Markers {
           let opts = this.getMarkerConfig({
             cssClass: PointClasses,
             seriesIndex,
-            dataPointIndex
+            dataPointIndex,
           })
 
           if (w.config.series[i].data[dataPointIndex]) {
@@ -124,6 +115,16 @@ export default class Markers {
           if (pSize) {
             opts.pSize = pSize
           }
+
+          if (
+            p.x[q] < 0 ||
+            p.x[q] > w.globals.gridWidth ||
+            p.y[q] < -w.globals.markers.largestSize ||
+            p.y[q] > w.globals.gridHeight + w.globals.markers.largestSize
+          ) {
+            opts.pSize = 0
+          }
+
           point = graphics.drawMarker(p.x[q], p.y[q], opts)
 
           point.attr('rel', dataPointIndex)
@@ -155,7 +156,7 @@ export default class Markers {
     cssClass,
     seriesIndex,
     dataPointIndex = null,
-    finishRadius = null
+    finishRadius = null,
   }) {
     const w = this.w
     let pStyle = this.getMarkerStyle(seriesIndex)
@@ -202,7 +203,7 @@ export default class Markers {
       pointFillOpacity: Array.isArray(m.fillOpacity)
         ? m.fillOpacity[seriesIndex]
         : m.fillOpacity,
-      seriesIndex
+      seriesIndex,
     }
   }
 
@@ -248,7 +249,7 @@ export default class Markers {
 
     return {
       pointStrokeColor,
-      pointFillColor
+      pointFillColor,
     }
   }
 }

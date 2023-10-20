@@ -1,4 +1,3 @@
-import CoreUtils from '../CoreUtils'
 import Graphics from '../Graphics'
 import XAxis from './XAxis'
 import AxesUtils from './AxesUtils'
@@ -18,7 +17,7 @@ class Grid {
     this.xaxisLabels = w.globals.labels.slice()
     this.axesUtils = new AxesUtils(ctx)
 
-    this.isRangeBar = w.globals.seriesRange.length
+    this.isRangeBar = w.globals.seriesRange.length && w.globals.isBarHorizontal
 
     if (w.globals.timescaleLabels.length > 0) {
       //  timescaleLabels labels are there
@@ -34,7 +33,7 @@ class Grid {
 
     if (elGrid === null) {
       elGrid = graphics.group({
-        class: 'apexcharts-grid'
+        class: 'apexcharts-grid',
       })
     }
 
@@ -129,10 +128,10 @@ class Grid {
       }
     }
     gl.dom.elGridRect = graphics.drawRect(
-      -strokeSize / 2 - barWidthLeft - 2,
-      -strokeSize / 2,
+      -strokeSize - barWidthLeft - 2,
+      -strokeSize * 2 - 2,
       gl.gridWidth + strokeSize + barWidthRight + barWidthLeft + 4,
-      gl.gridHeight + strokeSize,
+      gl.gridHeight + strokeSize * 4 + 4,
       0,
       '#fff'
     )
@@ -183,7 +182,10 @@ class Grid {
         this._drawGridLine({ i, x1, y1, x2, y2, xCount, parent })
       }
       let y_2 = 0
-      if (w.globals.hasGroups && w.config.xaxis.tickPlacement === 'between') {
+      if (
+        w.globals.hasXaxisGroups &&
+        w.config.xaxis.tickPlacement === 'between'
+      ) {
         const groups = w.globals.groups
         if (groups) {
           let gacc = 0
@@ -232,7 +234,7 @@ class Grid {
     )
     line.node.classList.add('apexcharts-gridline')
 
-    if (excludeBorders) {
+    if (excludeBorders && w.config.grid.show) {
       this.elGridBorders.add(line)
     } else {
       parent.add(line)
@@ -277,7 +279,7 @@ class Grid {
           x2,
           y2,
           xCount,
-          parent: this.elgridLinesV
+          parent: this.elgridLinesV,
         })
       }
     }
@@ -296,7 +298,7 @@ class Grid {
           x2,
           y2,
           xCount,
-          parent: this.elgridLinesV
+          parent: this.elgridLinesV,
         })
 
         x1 = x1 + w.globals.gridWidth / (w.globals.isXNumeric ? xC - 1 : xC)
@@ -341,7 +343,7 @@ class Grid {
           y1,
           x2,
           y2,
-          parent: this.elgridLinesH
+          parent: this.elgridLinesH,
         })
 
         y1 = y1 + w.globals.gridHeight / (this.isRangeBar ? tA : tickAmount)
@@ -369,7 +371,7 @@ class Grid {
             y1,
             x2,
             y2,
-            parent: this.elgridLinesV
+            parent: this.elgridLinesV,
           })
         }
 
@@ -395,7 +397,7 @@ class Grid {
           y1,
           x2,
           y2,
-          parent: this.elgridLinesH
+          parent: this.elgridLinesH,
         })
 
         y1 = y1 + w.globals.gridHeight / w.globals.dataPoints
@@ -410,16 +412,16 @@ class Grid {
     let graphics = new Graphics(this.ctx)
 
     this.elg = graphics.group({
-      class: 'apexcharts-grid'
+      class: 'apexcharts-grid',
     })
     this.elgridLinesH = graphics.group({
-      class: 'apexcharts-gridlines-horizontal'
+      class: 'apexcharts-gridlines-horizontal',
     })
     this.elgridLinesV = graphics.group({
-      class: 'apexcharts-gridlines-vertical'
+      class: 'apexcharts-gridlines-vertical',
     })
     this.elGridBorders = graphics.group({
-      class: 'apexcharts-grid-borders'
+      class: 'apexcharts-grid-borders',
     })
 
     this.elg.add(this.elgridLinesH)
@@ -447,6 +449,7 @@ class Grid {
       xCount = this.xaxisLabels.length
 
       if (this.isRangeBar) {
+        xCount--
         yTickAmount = w.globals.labels.length
         if (w.config.xaxis.tickAmount && w.config.xaxis.labels.formatter) {
           xCount = w.config.xaxis.tickAmount
@@ -465,7 +468,7 @@ class Grid {
     return {
       el: this.elg,
       elGridBorders: this.elGridBorders,
-      xAxisTickWidth: w.globals.gridWidth / xCount
+      xAxisTickWidth: w.globals.gridWidth / xCount,
     }
   }
 
@@ -492,7 +495,7 @@ class Grid {
           y1,
           x2,
           y2,
-          type: 'row'
+          type: 'row',
         })
 
         y1 = y1 + w.globals.gridHeight / tickAmount
@@ -506,6 +509,7 @@ class Grid {
     ) {
       const xc =
         !w.globals.isBarHorizontal &&
+        w.config.xaxis.tickPlacement === 'on' &&
         (w.config.xaxis.type === 'category' ||
           w.config.xaxis.convertedCatToNumeric)
           ? xCount - 1
@@ -524,7 +528,7 @@ class Grid {
           y1,
           x2,
           y2,
-          type: 'column'
+          type: 'column',
         })
 
         x1 = x1 + w.globals.gridWidth / xc

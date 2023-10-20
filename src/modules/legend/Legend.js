@@ -45,6 +45,15 @@ class Legend {
 
       this.drawLegends()
 
+      if (!Utils.isIE11()) {
+        this.legendHelpers.appendToForeignObject()
+      } else {
+        // IE11 doesn't supports foreignObject, hence append it to <head>
+        document
+          .getElementsByTagName('head')[0]
+          .appendChild(this.legendHelpers.getLegendStyles())
+      }
+
       if (cnf.legend.position === 'bottom' || cnf.legend.position === 'top') {
         this.legendAlignHorizontal()
       } else if (
@@ -180,7 +189,7 @@ class Legend {
 
       Graphics.setAttrs(elMarker, {
         rel: i + 1,
-        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries
+        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries,
       })
 
       if (collapsedSeries || ancillaryCollapsedSeries) {
@@ -195,6 +204,8 @@ class Legend {
 
       let textColor = w.config.legend.labels.useSeriesColors
         ? w.globals.colors[i]
+        : Array.isArray(w.config.legend.labels.colors)
+        ? w.config.legend.labels.colors?.[i]
         : w.config.legend.labels.colors
 
       if (!textColor) {
@@ -211,7 +222,7 @@ class Legend {
         rel: i + 1,
         i,
         'data:default-text': encodeURIComponent(text),
-        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries
+        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries,
       })
 
       elLegend.appendChild(elMarker)
@@ -262,7 +273,7 @@ class Legend {
       Graphics.setAttrs(elLegend, {
         rel: i + 1,
         seriesName: Utils.escapeString(legendNames[i]),
-        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries
+        'data:collapsed': collapsedSeries || ancillaryCollapsedSeries,
       })
 
       if (collapsedSeries || ancillaryCollapsedSeries) {
@@ -275,7 +286,6 @@ class Legend {
     }
 
     w.globals.dom.elWrap.addEventListener('click', me.onLegendClick, true)
-    w.globals.dom.elWrap.appendChild(w.globals.dom.elLegendWrap)
 
     if (
       w.config.legend.onItemHover.highlightDataSeries &&
@@ -395,6 +405,7 @@ class Legend {
     const w = this.w
 
     const hoverOverLegend =
+      e.target.classList.contains('apexcharts-legend-series') ||
       e.target.classList.contains('apexcharts-legend-text') ||
       e.target.classList.contains('apexcharts-legend-marker')
 
@@ -424,6 +435,7 @@ class Legend {
     if (w.config.legend.customLegendItems.length) return
 
     if (
+      e.target.classList.contains('apexcharts-legend-series') ||
       e.target.classList.contains('apexcharts-legend-text') ||
       e.target.classList.contains('apexcharts-legend-marker')
     ) {
@@ -446,7 +458,7 @@ class Legend {
         this.ctx.events.fireEvent('legendMarkerClick', [
           this.ctx,
           seriesCnt,
-          this.w
+          this.w,
         ])
       }
 
